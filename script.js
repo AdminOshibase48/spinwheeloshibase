@@ -1,404 +1,142 @@
-// Data untuk wheel
-let wheelItems = [
-    { name: "Hadiah 1", probability: 25, color: "#4a6fa5" },
-    { name: "Hadiah 2", probability: 25, color: "#6b8cbc" },
-    { name: "Hadiah 3", probability: 25, color: "#ff6b6b" },
-    { name: "Hadiah 4", probability: 25, color: "#4ecdc4" }
-];
-
-// Variabel global
-let canvas, ctx;
-let spinning = false;
-let currentRotation = 0;
-let totalProbability = 100;
-
-// Inisialisasi aplikasi
-document.addEventListener('DOMContentLoaded', function() {
-    // Setup canvas
-    canvas = document.getElementById('wheel');
-    ctx = canvas.getContext('2d');
-    
-    // Setup event listeners
-    document.getElementById('spin-btn').addEventListener('click', spinWheel);
-    document.getElementById('add-item').addEventListener('click', addItem);
-    document.getElementById('settings-toggle').addEventListener('click', toggleSettings);
-    document.getElementById('close-modal').addEventListener('click', closeModal);
-    document.querySelector('.close').addEventListener('click', closeModal);
-    
-    // Inisialisasi wheel
-    updateTotalProbability();
-    drawWheel();
-    renderItemsList();
-});
-
-// Fungsi untuk menggambar wheel
-function drawWheel() {
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = canvas.width / 2 - 10;
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Hitung total probabilitas
-    const total = wheelItems.reduce((sum, item) => sum + item.probability, 0);
-    
-    // Gambar setiap segmen
-    let startAngle = 0;
-    
-    wheelItems.forEach(item => {
-        const sliceAngle = (2 * Math.PI * item.probability) / total;
-        
-        // Gambar segmen
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
-        ctx.closePath();
-        ctx.fillStyle = item.color;
-        ctx.fill();
-        ctx.stroke();
-        
-        // Tambah teks
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(startAngle + sliceAngle / 2);
-        ctx.textAlign = 'right';
-        ctx.fillStyle = 'white';
-        ctx.font = '14px Arial';
-        ctx.fillText(item.name, radius - 20, 5);
-        ctx.restore();
-        
-        startAngle += sliceAngle;
-    });
-    
-    // Gambar lingkaran tengah
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 15, 0, 2 * Math.PI);
-    ctx.fillStyle = 'white';
-    ctx.fill();
-    ctx.stroke();
-}
-
-// Fungsi untuk memutar wheel
-function spinWheel() {
-    if (spinning || wheelItems.length < 2) return;
-    
-    spinning = true;
-    document.getElementById('spin-btn').disabled = true;
-    
-    // Hitung total probabilitas
-    const total = wheelItems.reduce((sum, item) => sum + item.probability, 0);
-    
-    // Generate angka acak berdasarkan probabilitas
-    const random = Math.random() * total;
-    
-    // Tentukan pemenang berdasarkan probabilitas
-    let cumulativeProbability = 0;
-    let winningIndex = 0;
-    
-    for (let i = 0; i < wheelItems.length; i++) {
-        cumulativeProbability += wheelItems[i].probability;
-        if (random <= cumulativeProbability) {
-            winningIndex = i;
-            break;
-        }
+// Konfigurasi Aplikasi
+const config = {
+    items: ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6'],
+    secretSettings: {
+        winProbability: 50,
+        autoSpin: false,
+        spinDuration: 5,
+        soundEnabled: true,
+        winnerColor: '#FFD700',
+        confettiEnabled: true,
+        weightedMode: false,
+        removeAfterWin: false
     }
-    
-    // Hitung sudut untuk pemenang
-    const sliceAngle = (2 * Math.PI) / wheelItems.length;
-    const targetAngle = (winningIndex * sliceAngle) + (Math.PI * 3) - (sliceAngle / 2);
-    
-    // Hitung rotasi yang diperlukan
-    const rotations = 5; // Jumlah putaran penuh
-    const targetRotation = currentRotation + (rotations * 2 * Math.PI) + targetAngle;
-    
-    // Animasi wheel
-    const startTime = Date.now();
-    const duration = 5000; // 5 detik
-    
-    function animate() {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing function untuk efek perlambatan
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        
-        currentRotation = easeOut * (targetRotation - currentRotation) + currentRotation;
-        
-        // Apply rotation ke canvas
-        canvas.style.transform = `rotate(${currentRotation}rad)`;
-        
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            // Selesai memutar
-            setTimeout(() => {
-                showResult(wheelItems[winningIndex]);
-                spinning = false;
-                document.getElementById('spin-btn').disabled = false;
-            }, 500);
-        }
-    }
-    
-    animate();
-}
-
-// Fungsi untuk menampilkan hasil
-function showResult(item) {
-    document.getElementById('result-text').textContent = item.name;
-    document.getElementById('result-modal').style.display = 'flex';
-}
-
-// Fungsi untuk menutup modal
-function closeModal() {
-    document.getElementById('result-modal').style.display = 'none';
-}
-
-// Fungsi untuk menambah item
-function addItem() {
-    const nameInput = document.getElementById('item-name');
-    const probabilityInput = document.getElementById('item-probability');
-    const colorInput = document.getElementById('item-color');
-    
-    const name = nameInput.value.trim();
-    const probability = parseInt(probabilityInput.value);
-    const color = colorInput.value;
-    
-    // Validasi input
-    if (!name) {
-        alert('Nama item tidak boleh kosong!');
-        return;
-    }
-    
-    if (isNaN(probability) || probability < 1 || probability > 100) {
-        alert('Probabilitas harus antara 1 dan 100!');
-        return;
-    }
-    
-    if (totalProbability + probability > 100) {
-        alert('Total probabilitas tidak boleh lebih dari 100%!');
-        return;
-    }
-    
-    // Tambah item ke array
-    wheelItems.push({
-        name: name,
-        probability: probability,
-        color: color
-    });
-    
-    // Reset form
-    nameInput.value = '';
-    probabilityInput.value = '20';
-    colorInput.value = '#4a6fa5';
-    
-    // Update UI
-    updateTotalProbability();
-    drawWheel();
-    renderItemsList();
-}
-
-// Fungsi untuk menghapus item
-function deleteItem(index) {
-    wheelItems.splice(index, 1);
-    updateTotalProbability();
-    drawWheel();
-    renderItemsList();
-}
-
-// Fungsi untuk merender daftar item
-function renderItemsList() {
-    const container = document.getElementById('items-container');
-    container.innerHTML = '';
-    
-    wheelItems.forEach((item, index) => {
-        const itemElement = document.createElement('div');
-        itemElement.className = 'item';
-        itemElement.style.borderLeftColor = item.color;
-        
-        itemElement.innerHTML = `
-            <div class="item-info">
-                <div class="item-color" style="background-color: ${item.color}"></div>
-                <span class="item-name">${item.name}</span>
-            </div>
-            <div class="item-details">
-                <span class="item-probability">${item.probability}%</span>
-                <button class="delete-btn" data-index="${index}">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
-        
-        container.appendChild(itemElement);
-    });
-    
-    // Tambah event listener untuk tombol hapus
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = parseInt(this.getAttribute('data-index'));
-            deleteItem(index);
-        });
-    });
-}
-
-// Fungsi untuk update total probabilitas
-function updateTotalProbability() {
-    totalProbability = wheelItems.reduce((sum, item) => sum + item.probability, 0);
-    document.getElementById('total-probability').textContent = totalProbability;
-    
-    // Update status tombol spin
-    document.getElementById('spin-btn').disabled = wheelItems.length < 2 || totalProbability !== 100;
-}
-
-// Fungsi untuk toggle pengaturan
-function toggleSettings() {
-    const content = document.getElementById('settings-content');
-    const toggleIcon = document.querySelector('.settings-toggle i');
-    
-    if (content.classList.contains('collapsed')) {
-        content.classList.remove('collapsed');
-        content.style.maxHeight = content.scrollHeight + 'px';
-        toggleIcon.className = 'fas fa-chevron-up';
-    } else {
-        content.classList.add('collapsed');
-        content.style.maxHeight = '0';
-        toggleIcon.className = 'fas fa-chevron-down';
-    }
-}
-// Konfigurasi Rahasia
-let secretConfig = {
-    winProbability: 50,        // Probabilitas menang dalam persen
-    itemCount: 6,              // Jumlah item default
-    winningItem: "Jackpot",    // Nama item kemenangan
-    losingItem: "Coba Lagi",   // Nama item kekalahan
-    animationSpeed: "normal",  // Kecepatan animasi
-    autoWin: false             // Mode auto win untuk testing
 };
 
-// Data wheel
+// Variabel Global
 let wheelItems = [];
 let spinning = false;
 let currentRotation = 0;
 let canvas, ctx;
+let confettiCanvas, confettiCtx;
 
-// Inisialisasi aplikasi
+// Inisialisasi Aplikasi
 document.addEventListener('DOMContentLoaded', function() {
-    // Setup canvas
+    initializeApp();
+    setupEventListeners();
+    loadItems();
+});
+
+// Inisialisasi Komponen
+function initializeApp() {
+    // Setup canvas wheel
     canvas = document.getElementById('wheel');
     ctx = canvas.getContext('2d');
     
+    // Setup confetti canvas
+    confettiCanvas = document.getElementById('confetti-canvas');
+    confettiCtx = confettiCanvas.getContext('2d');
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+    
     // Load konfigurasi dari localStorage
-    loadSecretConfig();
+    loadConfig();
     
     // Inisialisasi wheel
     initializeWheel();
-    
-    // Setup event listeners
-    setupEventListeners();
-});
+}
 
-// Setup event listeners
+// Setup Event Listeners
 function setupEventListeners() {
+    // Tombol utama
     document.getElementById('spin-btn').addEventListener('click', spinWheel);
-    document.getElementById('secret-settings').addEventListener('click', openSecretSettings);
-    document.getElementById('save-secret').addEventListener('click', saveSecretConfig);
-    document.getElementById('reset-secret').addEventListener('click', resetSecretConfig);
-    document.getElementById('close-modal').addEventListener('click', closeResultModal);
+    document.getElementById('reset-btn').addEventListener('click', resetWheel);
+    document.getElementById('add-item-btn').addEventListener('click', addItem);
+    document.getElementById('clear-all-btn').addEventListener('click', clearAllItems);
     
-    // Close modal ketika klik di luar
-    window.addEventListener('click', function(event) {
-        const secretModal = document.getElementById('secret-modal');
-        const resultModal = document.getElementById('result-modal');
-        
-        if (event.target === secretModal) {
-            secretModal.style.display = 'none';
-        }
-        if (event.target === resultModal) {
-            closeResultModal();
-        }
+    // Input item dengan Enter
+    document.getElementById('item-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') addItem();
     });
     
+    // Modal controls
+    document.getElementById('secret-trigger').addEventListener('click', openSecretSettings);
+    document.getElementById('save-settings').addEventListener('click', saveSecretSettings);
+    document.getElementById('reset-settings').addEventListener('click', resetSecretSettings);
+    document.getElementById('close-result').addEventListener('click', closeResultModal);
+    document.getElementById('spin-again').addEventListener('click', spinAgain);
+    
+    // Range inputs
+    document.getElementById('win-probability').addEventListener('input', updateRangeValue);
+    document.getElementById('spin-duration').addEventListener('input', updateRangeValue);
+    
     // Close modal dengan tombol close
-    document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', function() {
+    document.querySelectorAll('.close').forEach(btn => {
+        btn.addEventListener('click', function() {
             this.closest('.modal').style.display = 'none';
         });
     });
+    
+    // Close modal dengan klik di luar
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    });
+    
+    // Responsive canvas
+    window.addEventListener('resize', function() {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+    });
 }
 
-// Inisialisasi wheel dengan konfigurasi rahasia
+// Inisialisasi Wheel
 function initializeWheel() {
-    generateWheelItems();
+    if (wheelItems.length === 0) {
+        wheelItems = [...config.items];
+    }
     drawWheel();
 }
 
-// Generate item berdasarkan konfigurasi rahasia
-function generateWheelItems() {
-    wheelItems = [];
-    const colors = [
-        '#4a6fa5', '#6b8cbc', '#ff6b6b', '#4ecdc4', 
-        '#ffbe0b', '#9b59b6', '#2ecc71', '#e74c3c',
-        '#3498db', '#f39c12', '#1abc9c', '#d35400'
-    ];
-    
-    // Hitung jumlah item menang berdasarkan probabilitas
-    const winCount = Math.max(1, Math.floor(secretConfig.itemCount * secretConfig.winProbability / 100));
-    const loseCount = secretConfig.itemCount - winCount;
-    
-    // Tambah item menang
-    for (let i = 0; i < winCount; i++) {
-        wheelItems.push({
-            name: i === 0 ? secretConfig.winningItem : `Hadiah ${i+1}`,
-            probability: 100 / secretConfig.itemCount,
-            color: colors[i % colors.length],
-            isWin: true
-        });
-    }
-    
-    // Tambah item kalah
-    for (let i = 0; i < loseCount; i++) {
-        wheelItems.push({
-            name: secretConfig.losingItem,
-            probability: 100 / secretConfig.itemCount,
-            color: colors[(winCount + i) % colors.length],
-            isWin: false
-        });
-    }
-    
-    // Acak urutan item
-    wheelItems = shuffleArray(wheelItems);
-}
-
-// Acak array
-function shuffleArray(array) {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-}
-
-// Gambar wheel
+// Gambar Wheel
 function drawWheel() {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = canvas.width / 2 - 20;
+    const radius = canvas.width / 2 - 30;
     
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    if (wheelItems.length === 0) {
+        // Tampilkan pesan jika tidak ada item
+        ctx.fillStyle = '#f0f0f0';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.fillStyle = '#666';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Tambahkan item terlebih dahulu', centerX, centerY);
+        return;
+    }
+    
     // Gambar setiap segmen
-    let startAngle = 0;
     const sliceAngle = (2 * Math.PI) / wheelItems.length;
+    let startAngle = 0;
+    
+    const colors = generateColors(wheelItems.length);
     
     wheelItems.forEach((item, index) => {
+        const endAngle = startAngle + sliceAngle;
+        
         // Gambar segmen
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
         ctx.closePath();
-        ctx.fillStyle = item.color;
+        ctx.fillStyle = colors[index];
         ctx.fill();
         
         // Border segmen
@@ -413,79 +151,67 @@ function drawWheel() {
         ctx.textAlign = 'right';
         ctx.fillStyle = 'white';
         ctx.font = 'bold 16px Arial';
-        ctx.fillText(item.name, radius - 30, 5);
+        ctx.fillText(item, radius - 40, 5);
         ctx.restore();
         
-        startAngle += sliceAngle;
+        startAngle = endAngle;
     });
     
     // Gambar lingkaran tengah
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 20, 0, 2 * Math.PI);
+    ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
     ctx.fillStyle = 'white';
     ctx.fill();
-    ctx.strokeStyle = var(--dark-color);
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#2c3e50';
+    ctx.lineWidth = 4;
     ctx.stroke();
+    
+    // Gambar icon settings di tengah
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = '20px FontAwesome';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('\uf013', centerX, centerY);
 }
 
-// Putar wheel
+// Generate warna untuk segmen
+function generateColors(count) {
+    const colors = [];
+    const hueStep = 360 / count;
+    
+    for (let i = 0; i < count; i++) {
+        const hue = (i * hueStep) % 360;
+        colors.push(`hsl(${hue}, 70%, 60%)`);
+    }
+    
+    return colors;
+}
+
+// Putar Wheel
 function spinWheel() {
-    if (spinning) return;
+    if (spinning || wheelItems.length === 0) return;
     
     spinning = true;
     document.getElementById('spin-btn').disabled = true;
     
-    // Mode auto win untuk testing
-    if (secretConfig.autoWin) {
-        const winningItem = wheelItems.find(item => item.isWin);
-        animateWheel(winningItem);
-        return;
-    }
-    
-    // Tentukan hasil berdasarkan probabilitas
-    const random = Math.random() * 100;
-    let resultItem;
-    
-    if (random <= secretConfig.winProbability) {
-        // Pilih item menang secara acak
-        const winItems = wheelItems.filter(item => item.isWin);
-        resultItem = winItems[Math.floor(Math.random() * winItems.length)];
-    } else {
-        // Pilih item kalah secara acak
-        const loseItems = wheelItems.filter(item => !item.isWin);
-        resultItem = loseItems[Math.floor(Math.random() * loseItems.length)];
-    }
-    
-    animateWheel(resultItem);
-}
-
-// Animasi wheel
-function animateWheel(resultItem) {
-    const resultIndex = wheelItems.findIndex(item => item === resultItem);
+    // Tentukan pemenang berdasarkan probabilitas rahasia
+    const winnerIndex = determineWinner();
     const sliceAngle = (2 * Math.PI) / wheelItems.length;
     
-    // Hitung sudut target
-    const targetAngle = (resultIndex * sliceAngle) + (Math.PI * 5) - (sliceAngle / 2);
+    // Hitung sudut target dengan beberapa putaran penuh
+    const targetAngle = (winnerIndex * sliceAngle) + (Math.PI * 8) - (sliceAngle / 2);
     
-    // Tentukan durasi berdasarkan kecepatan
-    let duration;
-    switch(secretConfig.animationSpeed) {
-        case 'slow': duration = 7000; break;
-        case 'fast': duration = 3000; break;
-        default: duration = 5000;
-    }
-    
+    const duration = config.secretSettings.spinDuration * 1000;
     const startTime = Date.now();
     const startRotation = currentRotation;
-    const targetRotation = startRotation + (5 * 2 * Math.PI) + targetAngle;
+    const targetRotation = startRotation + (8 * 2 * Math.PI) + targetAngle;
     
     function animate() {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
         // Easing function untuk efek perlambatan
-        const easeOut = 1 - Math.pow(1 - progress, 4);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
         
         currentRotation = startRotation + easeOut * (targetRotation - startRotation);
         
@@ -496,26 +222,78 @@ function animateWheel(resultItem) {
             requestAnimationFrame(animate);
         } else {
             // Selesai memutar
-            setTimeout(() => {
-                showResult(resultItem);
-                spinning = false;
-                document.getElementById('spin-btn').disabled = false;
-            }, 1000);
+            finishSpin(winnerIndex);
         }
     }
     
     animate();
+    
+    // Play sound effect jika diaktifkan
+    if (config.secretSettings.soundEnabled) {
+        playSpinSound();
+    }
+}
+
+// Tentukan pemenang berdasarkan probabilitas rahasia
+function determineWinner() {
+    if (config.secretSettings.weightedMode && wheelItems.length > 1) {
+        // Mode probabilitas tertimbang - item pertama lebih mungkin menang
+        const weights = wheelItems.map((_, index) => 
+            Math.max(0.1, 1 - (index * 0.8 / wheelItems.length))
+        );
+        const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+        const random = Math.random() * totalWeight;
+        
+        let cumulativeWeight = 0;
+        for (let i = 0; i < weights.length; i++) {
+            cumulativeWeight += weights[i];
+            if (random <= cumulativeWeight) {
+                return i;
+            }
+        }
+    }
+    
+    // Mode normal - semua item memiliki probabilitas sama
+    // Tapi kita manipulasi berdasarkan winProbability
+    const shouldWin = Math.random() * 100 <= config.secretSettings.winProbability;
+    
+    if (shouldWin) {
+        // Pilih dari item yang "menang" (kita anggap semua bisa menang untuk simplicity)
+        return Math.floor(Math.random() * wheelItems.length);
+    } else {
+        // Jika tidak menang, pilih item secara acak
+        return Math.floor(Math.random() * wheelItems.length);
+    }
+}
+
+// Selesaikan putaran
+function finishSpin(winnerIndex) {
+    setTimeout(() => {
+        const winner = wheelItems[winnerIndex];
+        
+        // Tampilkan hasil
+        showResult(winner);
+        
+        // Aktifkan tombol spin lagi
+        spinning = false;
+        document.getElementById('spin-btn').disabled = false;
+        
+        // Hapus item jika diaktifkan
+        if (config.secretSettings.removeAfterWin) {
+            removeItem(winnerIndex);
+        }
+        
+        // Tampilkan confetti jika diaktifkan
+        if (config.secretSettings.confettiEnabled) {
+            launchConfetti();
+        }
+    }, 1000);
 }
 
 // Tampilkan hasil
-function showResult(item) {
-    document.getElementById('result-text').textContent = item.name;
-    
-    const message = item.isWin 
-        ? "🎉 Selamat! Anda memenangkan hadiah!" 
-        : "😔 Sayang sekali, coba lagi ya!";
-    
-    document.getElementById('result-message').textContent = message;
+function showResult(winner) {
+    document.getElementById('winner-name').textContent = winner;
+    document.getElementById('winner-name').style.color = config.secretSettings.winnerColor;
     document.getElementById('result-modal').style.display = 'flex';
 }
 
@@ -524,62 +302,226 @@ function closeResultModal() {
     document.getElementById('result-modal').style.display = 'none';
 }
 
+// Putar lagi
+function spinAgain() {
+    closeResultModal();
+    if (config.secretSettings.autoSpin) {
+        setTimeout(spinWheel, 500);
+    }
+}
+
+// Reset wheel
+function resetWheel() {
+    currentRotation = 0;
+    canvas.style.transform = 'rotate(0rad)';
+    initializeWheel();
+}
+
+// Tambah item
+function addItem() {
+    const input = document.getElementById('item-input');
+    const itemName = input.value.trim();
+    
+    if (itemName) {
+        wheelItems.push(itemName);
+        input.value = '';
+        drawWheel();
+        renderItemsList();
+        saveItems();
+    }
+}
+
+// Hapus item
+function removeItem(index) {
+    wheelItems.splice(index, 1);
+    drawWheel();
+    renderItemsList();
+    saveItems();
+}
+
+// Hapus semua item
+function clearAllItems() {
+    if (wheelItems.length > 0 && confirm('Apakah Anda yakin ingin menghapus semua item?')) {
+        wheelItems = [];
+        drawWheel();
+        renderItemsList();
+        saveItems();
+    }
+}
+
+// Render daftar item
+function renderItemsList() {
+    const container = document.getElementById('items-container');
+    container.innerHTML = '';
+    
+    wheelItems.forEach((item, index) => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'item';
+        itemElement.innerHTML = `
+            <span class="item-name">${item}</span>
+            <button class="delete-item" data-index="${index}">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(itemElement);
+    });
+    
+    // Add event listeners untuk tombol hapus
+    document.querySelectorAll('.delete-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            removeItem(index);
+        });
+    });
+}
+
 // Buka pengaturan rahasia
 function openSecretSettings() {
     // Isi form dengan konfigurasi saat ini
-    document.getElementById('secret-probability').value = secretConfig.winProbability;
-    document.getElementById('secret-items').value = secretConfig.itemCount;
-    document.getElementById('winning-item').value = secretConfig.winningItem;
-    document.getElementById('losing-item').value = secretConfig.losingItem;
-    document.getElementById('animation-speed').value = secretConfig.animationSpeed;
-    document.getElementById('auto-win').checked = secretConfig.autoWin;
+    document.getElementById('win-probability').value = config.secretSettings.winProbability;
+    document.getElementById('win-probability-value').textContent = config.secretSettings.winProbability + '%';
+    document.getElementById('auto-spin').checked = config.secretSettings.autoSpin;
+    document.getElementById('spin-duration').value = config.secretSettings.spinDuration;
+    document.getElementById('spin-duration-value').textContent = config.secretSettings.spinDuration + 's';
+    document.getElementById('sound-effect').checked = config.secretSettings.soundEnabled;
+    document.getElementById('winner-color').value = config.secretSettings.winnerColor;
+    document.getElementById('confetti-effect').checked = config.secretSettings.confettiEnabled;
+    document.getElementById('weighted-mode').checked = config.secretSettings.weightedMode;
+    document.getElementById('remove-after-win').checked = config.secretSettings.removeAfterWin;
     
     document.getElementById('secret-modal').style.display = 'flex';
 }
 
-// Simpan konfigurasi rahasia
-function saveSecretConfig() {
-    secretConfig.winProbability = parseInt(document.getElementById('secret-probability').value);
-    secretConfig.itemCount = parseInt(document.getElementById('secret-items').value);
-    secretConfig.winningItem = document.getElementById('winning-item').value;
-    secretConfig.losingItem = document.getElementById('losing-item').value;
-    secretConfig.animationSpeed = document.getElementById('animation-speed').value;
-    secretConfig.autoWin = document.getElementById('auto-win').checked;
+// Simpan pengaturan rahasia
+function saveSecretSettings() {
+    config.secretSettings.winProbability = parseInt(document.getElementById('win-probability').value);
+    config.secretSettings.autoSpin = document.getElementById('auto-spin').checked;
+    config.secretSettings.spinDuration = parseInt(document.getElementById('spin-duration').value);
+    config.secretSettings.soundEnabled = document.getElementById('sound-effect').checked;
+    config.secretSettings.winnerColor = document.getElementById('winner-color').value;
+    config.secretSettings.confettiEnabled = document.getElementById('confetti-effect').checked;
+    config.secretSettings.weightedMode = document.getElementById('weighted-mode').checked;
+    config.secretSettings.removeAfterWin = document.getElementById('remove-after-win').checked;
     
     // Simpan ke localStorage
-    localStorage.setItem('wheelSecretConfig', JSON.stringify(secretConfig));
+    localStorage.setItem('wheelSecretConfig', JSON.stringify(config.secretSettings));
     
-    // Update wheel
-    initializeWheel();
-    
-    // Tutup modal
     document.getElementById('secret-modal').style.display = 'none';
-    
-    // Tampilkan konfirmasi
     alert('Pengaturan rahasia telah disimpan!');
 }
 
-// Reset konfigurasi rahasia
-function resetSecretConfig() {
-    secretConfig = {
-        winProbability: 50,
-        itemCount: 6,
-        winningItem: "Jackpot",
-        losingItem: "Coba Lagi",
-        animationSpeed: "normal",
-        autoWin: false
-    };
-    
-    localStorage.removeItem('wheelSecretConfig');
-    initializeWheel();
-    document.getElementById('secret-modal').style.display = 'none';
-    alert('Pengaturan telah direset ke default!');
+// Reset pengaturan rahasia
+function resetSecretSettings() {
+    if (confirm('Reset semua pengaturan ke default?')) {
+        config.secretSettings = {
+            winProbability: 50,
+            autoSpin: false,
+            spinDuration: 5,
+            soundEnabled: true,
+            winnerColor: '#FFD700',
+            confettiEnabled: true,
+            weightedMode: false,
+            removeAfterWin: false
+        };
+        
+        localStorage.removeItem('wheelSecretConfig');
+        document.getElementById('secret-modal').style.display = 'none';
+        alert('Pengaturan telah direset ke default!');
+    }
+}
+
+// Update nilai range
+function updateRangeValue(e) {
+    const value = e.target.value;
+    if (e.target.id === 'win-probability') {
+        document.getElementById('win-probability-value').textContent = value + '%';
+    } else if (e.target.id === 'spin-duration') {
+        document.getElementById('spin-duration-value').textContent = value + 's';
+    }
 }
 
 // Load konfigurasi dari localStorage
-function loadSecretConfig() {
+function loadConfig() {
     const savedConfig = localStorage.getItem('wheelSecretConfig');
     if (savedConfig) {
-        secretConfig = JSON.parse(savedConfig);
+        config.secretSettings = JSON.parse(savedConfig);
     }
+}
+
+// Load items dari localStorage
+function loadItems() {
+    const savedItems = localStorage.getItem('wheelItems');
+    if (savedItems) {
+        wheelItems = JSON.parse(savedItems);
+    }
+    renderItemsList();
+}
+
+// Simpan items ke localStorage
+function saveItems() {
+    localStorage.setItem('wheelItems', JSON.stringify(wheelItems));
+}
+
+// Play sound effect
+function playSpinSound() {
+    // Create audio context untuk sound effect sederhana
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 5);
+    
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 5);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 5);
+}
+
+// Confetti effect
+function launchConfetti() {
+    const confettiCount = 200;
+    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+    
+    for (let i = 0; i < confettiCount; i++) {
+        setTimeout(() => {
+            createConfettiPiece();
+        }, i * 10);
+    }
+}
+
+function createConfettiPiece() {
+    const x = Math.random() * confettiCanvas.width;
+    const y = -20;
+    const size = Math.random() * 10 + 5;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const speed = Math.random() * 3 + 2;
+    const angle = Math.random() * Math.PI * 2;
+    const spin = Math.random() * 0.2 - 0.1;
+    
+    let rotation = 0;
+    
+    function animate() {
+        confettiCtx.save();
+        confettiCtx.translate(x, y);
+        confettiCtx.rotate(rotation);
+        
+        confettiCtx.fillStyle = color;
+        confettiCtx.fillRect(-size/2, -size/2, size, size);
+        
+        confettiCtx.restore();
+        
+        y += speed;
+        rotation += spin;
+        
+        if (y < confettiCanvas.height) {
+            requestAnimationFrame(animate);
+        }
+    }
+    
+    animate();
 }
