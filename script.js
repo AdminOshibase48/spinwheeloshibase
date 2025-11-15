@@ -23,7 +23,7 @@ class WheelOfFortune {
         this.confettiCtx = null;
         this.confettiParticles = [];
         this.animationId = null;
-        this.confettiAnimationId = null; // Tambahkan ini
+        this.confettiAnimationId = null;
 
         this.init();
     }
@@ -324,11 +324,20 @@ class WheelOfFortune {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
+        if (this.confettiAnimationId) {
+            cancelAnimationFrame(this.confettiAnimationId);
+        }
         this.currentRotation = 0;
         this.canvas.style.transform = 'rotate(0rad)';
         this.spinning = false;
         const spinBtn = document.getElementById('spin-btn');
         if (spinBtn) spinBtn.disabled = false;
+        
+        // Clear confetti
+        if (this.confettiCtx && this.confettiCanvas) {
+            this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+            this.confettiCanvas.style.display = 'none';
+        }
     }
 
     addItem() {
@@ -506,65 +515,71 @@ class WheelOfFortune {
     }
 
     launchConfetti() {
-    if (!this.confettiCanvas || !this.confettiCtx) return;
-    
-    // Reset confetti canvas
-    this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
-    this.confettiCanvas.style.display = 'block';
-    
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFEAA7', '#DDA0DD', '#F7DC6F'];
-    const confettiCount = 100;
-    const confettiParticles = [];
-    
-    // Buat partikel confetti
-    for (let i = 0; i < confettiCount; i++) {
-        confettiParticles.push({
-            x: Math.random() * this.confettiCanvas.width,
-            y: -20,
-            size: Math.random() * 12 + 6,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            speed: Math.random() * 3 + 2,
-            rotation: Math.random() * Math.PI * 2,
-            spin: (Math.random() - 0.5) * 0.1
-        });
-    }
-    
-    const animateConfetti = () => {
-        this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+        if (!this.confettiCanvas || !this.confettiCtx) return;
         
-        let particlesAlive = false;
-        
-        confettiParticles.forEach(particle => {
-            if (particle.y < this.confettiCanvas.height) {
-                particlesAlive = true;
-                
-                // Update posisi
-                particle.y += particle.speed;
-                particle.x += Math.sin(particle.rotation) * 1;
-                particle.rotation += particle.spin;
-                
-                // Gambar confetti
-                this.confettiCtx.save();
-                this.confettiCtx.translate(particle.x, particle.y);
-                this.confettiCtx.rotate(particle.rotation);
-                this.confettiCtx.fillStyle = particle.color;
-                this.confettiCtx.fillRect(-particle.size/2, -particle.size/2, particle.size, particle.size);
-                this.confettiCtx.restore();
-            }
-        });
-        
-        if (particlesAlive) {
-            requestAnimationFrame(animateConfetti);
-        } else {
-            // Sembunyikan canvas ketika selesai
-            setTimeout(() => {
-                this.confettiCanvas.style.display = 'none';
-            }, 1000);
+        // Stop previous confetti animation
+        if (this.confettiAnimationId) {
+            cancelAnimationFrame(this.confettiAnimationId);
         }
-    };
-    
-    animateConfetti();
-}
         
-// Start the application
+        // Reset confetti canvas
+        this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+        this.confettiCanvas.style.display = 'block';
+        
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFEAA7', '#DDA0DD', '#F7DC6F'];
+        const confettiCount = 100;
+        const confettiParticles = [];
+        
+        // Buat partikel confetti
+        for (let i = 0; i < confettiCount; i++) {
+            confettiParticles.push({
+                x: Math.random() * this.confettiCanvas.width,
+                y: -20,
+                size: Math.random() * 12 + 6,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                speed: Math.random() * 3 + 2,
+                rotation: Math.random() * Math.PI * 2,
+                spin: (Math.random() - 0.5) * 0.1
+            });
+        }
+        
+        const animateConfetti = () => {
+            this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+            
+            let particlesAlive = false;
+            
+            confettiParticles.forEach(particle => {
+                if (particle.y < this.confettiCanvas.height) {
+                    particlesAlive = true;
+                    
+                    // Update posisi
+                    particle.y += particle.speed;
+                    particle.x += Math.sin(particle.rotation) * 1;
+                    particle.rotation += particle.spin;
+                    
+                    // Gambar confetti
+                    this.confettiCtx.save();
+                    this.confettiCtx.translate(particle.x, particle.y);
+                    this.confettiCtx.rotate(particle.rotation);
+                    this.confettiCtx.fillStyle = particle.color;
+                    this.confettiCtx.fillRect(-particle.size/2, -particle.size/2, particle.size, particle.size);
+                    this.confettiCtx.restore();
+                }
+            });
+            
+            if (particlesAlive) {
+                this.confettiAnimationId = requestAnimationFrame(animateConfetti);
+            } else {
+                // Sembunyikan canvas ketika selesai
+                setTimeout(() => {
+                    this.confettiCanvas.style.display = 'none';
+                }, 1000);
+            }
+        };
+        
+        animateConfetti();
+    }
+}
+
+// Start the application - FIXED: Pastikan ini di luar class
 const wheelApp = new WheelOfFortune();
