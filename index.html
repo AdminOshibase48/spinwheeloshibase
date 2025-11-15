@@ -35,6 +35,9 @@
                             <button id="reset-btn" class="reset-btn">
                                 <i class="fas fa-redo"></i> Reset
                             </button>
+                            <button id="probability-btn" class="probability-btn">
+                                <i class="fas fa-percentage"></i> Probabilitas
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -62,6 +65,36 @@
                 </div>
             </div>
         </main>
+
+        <!-- Modal Probabilitas Item -->
+        <div id="probability-modal" class="modal">
+            <div class="modal-content probability-modal">
+                <div class="modal-header">
+                    <h2><i class="fas fa-percentage"></i> Pengaturan Probabilitas</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="probability-info">
+                        <p>Total Probabilitas: <span id="total-probability">100</span>%</p>
+                        <div class="probability-warning" id="probability-warning" style="display: none;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Total probabilitas harus 100%
+                        </div>
+                    </div>
+                    <div id="probability-items" class="probability-items">
+                        <!-- Item probability controls akan muncul di sini -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="auto-distribute-btn" class="secondary-btn">
+                        <i class="fas fa-magic"></i> Distribusi Merata
+                    </button>
+                    <button id="save-probability" class="save-btn">
+                        <i class="fas fa-save"></i> Simpan Probabilitas
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Modal Pengaturan Rahasia -->
         <div id="secret-modal" class="modal">
@@ -154,6 +187,9 @@
                 <div class="modal-body">
                     <div id="result-content" class="result-content">
                         <div class="winner-name" id="winner-name">Loading...</div>
+                        <div class="probability-info-result">
+                            Probabilitas: <span id="winner-probability">0</span>%
+                        </div>
                         <div class="congratulations">Selamat!</div>
                     </div>
                 </div>
