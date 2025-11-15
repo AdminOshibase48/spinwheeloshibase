@@ -35,9 +35,6 @@
                             <button id="reset-btn" class="reset-btn">
                                 <i class="fas fa-redo"></i> Reset
                             </button>
-                            <button id="probability-btn" class="probability-btn">
-                                <i class="fas fa-percentage"></i> Probabilitas
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -66,37 +63,7 @@
             </div>
         </main>
 
-        <!-- Modal Probabilitas Item -->
-        <div id="probability-modal" class="modal">
-            <div class="modal-content probability-modal">
-                <div class="modal-header">
-                    <h2><i class="fas fa-percentage"></i> Pengaturan Probabilitas</h2>
-                    <span class="close">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div class="probability-info">
-                        <p>Total Probabilitas: <span id="total-probability">100</span>%</p>
-                        <div class="probability-warning" id="probability-warning" style="display: none;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Total probabilitas harus 100%
-                        </div>
-                    </div>
-                    <div id="probability-items" class="probability-items">
-                        <!-- Item probability controls akan muncul di sini -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="auto-distribute-btn" class="secondary-btn">
-                        <i class="fas fa-magic"></i> Distribusi Merata
-                    </button>
-                    <button id="save-probability" class="save-btn">
-                        <i class="fas fa-save"></i> Simpan Probabilitas
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Pengaturan Rahasia -->
+        <!-- Modal Pengaturan Rahasia (Sekarang termasuk probabilitas) -->
         <div id="secret-modal" class="modal">
             <div class="modal-content secret-modal">
                 <div class="modal-header">
@@ -104,51 +71,79 @@
                     <span class="close">&times;</span>
                 </div>
                 <div class="modal-body">
-                    <div class="settings-grid">
-                        <div class="setting-group">
-                            <label for="win-probability">Probabilitas Menang (%)</label>
-                            <input type="range" id="win-probability" min="1" max="100" value="50">
-                            <span id="win-probability-value">50%</span>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="auto-spin">Auto Spin</label>
-                            <label class="switch">
-                                <input type="checkbox" id="auto-spin">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="spin-duration">Durasi Putaran (detik)</label>
-                            <input type="range" id="spin-duration" min="3" max="10" value="5">
-                            <span id="spin-duration-value">5s</span>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="sound-effect">Efek Suara</label>
-                            <label class="switch">
-                                <input type="checkbox" id="sound-effect" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="winner-color">Warna Pemenang</label>
-                            <input type="color" id="winner-color" value="#FFD700">
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label for="confetti-effect">Efek Konfeti</label>
-                            <label class="switch">
-                                <input type="checkbox" id="confetti-effect" checked>
-                                <span class="slider"></span>
-                            </label>
+                    <div class="settings-tabs">
+                        <button class="tab-button active" data-tab="basic">Pengaturan Dasar</button>
+                        <button class="tab-button" data-tab="probability">Probabilitas Item</button>
+                        <button class="tab-button" data-tab="advanced">Pengaturan Lanjutan</button>
+                    </div>
+
+                    <!-- Tab Pengaturan Dasar -->
+                    <div id="basic-tab" class="tab-content active">
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <label for="win-probability">Probabilitas Menang (%)</label>
+                                <input type="range" id="win-probability" min="1" max="100" value="50">
+                                <span id="win-probability-value">50%</span>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="auto-spin">Auto Spin</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="auto-spin">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="spin-duration">Durasi Putaran (detik)</label>
+                                <input type="range" id="spin-duration" min="3" max="10" value="5">
+                                <span id="spin-duration-value">5s</span>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="sound-effect">Efek Suara</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="sound-effect" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="winner-color">Warna Pemenang</label>
+                                <input type="color" id="winner-color" value="#FFD700">
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="confetti-effect">Efek Konfeti</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="confetti-effect" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="advanced-settings">
-                        <h3><i class="fas fa-cogs"></i> Pengaturan Lanjutan</h3>
+
+                    <!-- Tab Probabilitas Item -->
+                    <div id="probability-tab" class="tab-content">
+                        <div class="probability-info">
+                            <p>Total Probabilitas: <span id="total-probability">100</span>%</p>
+                            <div class="probability-warning" id="probability-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Total probabilitas harus 100%
+                            </div>
+                        </div>
+                        <div id="probability-items" class="probability-items">
+                            <!-- Item probability controls akan muncul di sini -->
+                        </div>
+                        <div class="probability-actions">
+                            <button id="auto-distribute-btn" class="secondary-btn">
+                                <i class="fas fa-magic"></i> Distribusi Merata
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab Pengaturan Lanjutan -->
+                    <div id="advanced-tab" class="tab-content">
                         <div class="setting-group">
                             <label for="weighted-mode">Mode Probabilitas Tertimbang</label>
                             <label class="switch">
@@ -164,14 +159,22 @@
                                 <span class="slider"></span>
                             </label>
                         </div>
+
+                        <div class="setting-group">
+                            <label for="show-probability">Tampilkan Probabilitas di Wheel</label>
+                            <label class="switch">
+                                <input type="checkbox" id="show-probability">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="save-settings" class="save-btn">
-                        <i class="fas fa-save"></i> Simpan Pengaturan
-                    </button>
                     <button id="reset-settings" class="reset-btn">
                         <i class="fas fa-undo"></i> Reset
+                    </button>
+                    <button id="save-settings" class="save-btn">
+                        <i class="fas fa-save"></i> Simpan Pengaturan
                     </button>
                 </div>
             </div>
@@ -187,9 +190,6 @@
                 <div class="modal-body">
                     <div id="result-content" class="result-content">
                         <div class="winner-name" id="winner-name">Loading...</div>
-                        <div class="probability-info-result">
-                            Probabilitas: <span id="winner-probability">0</span>%
-                        </div>
                         <div class="congratulations">Selamat!</div>
                     </div>
                 </div>
