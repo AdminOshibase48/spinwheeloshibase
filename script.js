@@ -1,4 +1,3 @@
-// Konfigurasi Aplikasi
 class WheelOfFortune {
     constructor() {
         this.config = {
@@ -29,9 +28,8 @@ class WheelOfFortune {
     }
 
     init() {
-        console.log('🚀 Menginisialisasi Wheel of Fortune...');
+        console.log('🚀 Wheel of Fortune Initializing...');
         
-        // Tunggu DOM siap
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.setup());
         } else {
@@ -48,24 +46,18 @@ class WheelOfFortune {
             this.setupEventListeners();
             this.initializeWheel();
             
-            console.log('✅ Aplikasi berhasil diinisialisasi');
+            console.log('✅ Wheel of Fortune Ready!');
         } catch (error) {
-            console.error('❌ Error saat setup:', error);
+            console.error('❌ Setup Error:', error);
         }
     }
 
     setupCanvas() {
         this.canvas = document.getElementById('wheel');
-        if (!this.canvas) {
-            throw new Error('Canvas wheel tidak ditemukan!');
-        }
-
+        if (!this.canvas) throw new Error('Canvas not found');
+        
         this.ctx = this.canvas.getContext('2d');
-        if (!this.ctx) {
-            throw new Error('Tidak bisa mendapatkan context 2D dari canvas!');
-        }
-
-        console.log('✅ Canvas berhasil disetup');
+        if (!this.ctx) throw new Error('Canvas context not available');
     }
 
     setupConfetti() {
@@ -84,59 +76,48 @@ class WheelOfFortune {
     }
 
     setupEventListeners() {
-        console.log('🔧 Setup event listeners...');
-
-        // Tombol utama
-        this.addEventListener('spin-btn', 'click', () => this.spinWheel());
-        this.addEventListener('reset-btn', 'click', () => this.resetWheel());
-        this.addEventListener('add-item-btn', 'click', () => this.addItem());
-        this.addEventListener('clear-all-btn', 'click', () => this.clearAllItems());
+        // Button events
+        this.addListener('spin-btn', 'click', () => this.spinWheel());
+        this.addListener('reset-btn', 'click', () => this.resetWheel());
+        this.addListener('add-item-btn', 'click', () => this.addItem());
+        this.addListener('clear-all-btn', 'click', () => this.clearAllItems());
+        this.addListener('secret-trigger', 'click', () => this.openSecretSettings());
+        this.addListener('save-settings', 'click', () => this.saveSecretSettings());
+        this.addListener('reset-settings', 'click', () => this.resetSecretSettings());
+        this.addListener('close-result', 'click', () => this.closeResultModal());
+        this.addListener('spin-again', 'click', () => this.spinAgain());
         
-        // Input item dengan Enter
-        this.addEventListener('item-input', 'keypress', (e) => {
+        // Input events
+        this.addListener('item-input', 'keypress', (e) => {
             if (e.key === 'Enter') this.addItem();
         });
         
-        // Modal controls
-        this.addEventListener('secret-trigger', 'click', () => this.openSecretSettings());
-        this.addEventListener('save-settings', 'click', () => this.saveSecretSettings());
-        this.addEventListener('reset-settings', 'click', () => this.resetSecretSettings());
-        this.addEventListener('close-result', 'click', () => this.closeResultModal());
-        this.addEventListener('spin-again', 'click', () => this.spinAgain());
-        
         // Range inputs
-        this.addEventListener('win-probability', 'input', (e) => this.updateRangeValue(e));
-        this.addEventListener('spin-duration', 'input', (e) => this.updateRangeValue(e));
+        this.addListener('win-probability', 'input', (e) => this.updateRangeValue(e));
+        this.addListener('spin-duration', 'input', (e) => this.updateRangeValue(e));
         
-        // Close modal dengan tombol close
+        // Modal close events
         document.querySelectorAll('.close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
+            btn.addEventListener('click', () => {
                 const modal = btn.closest('.modal');
                 if (modal) modal.style.display = 'none';
             });
         });
         
-        // Close modal dengan klik di luar
+        // Close modal on outside click
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
             }
         });
-        
-        // Responsive confetti
-        window.addEventListener('resize', () => this.updateConfettiSize());
 
-        console.log('✅ Event listeners berhasil disetup');
+        // Window resize
+        window.addEventListener('resize', () => this.updateConfettiSize());
     }
 
-    addEventListener(id, event, handler) {
+    addListener(id, event, handler) {
         const element = document.getElementById(id);
-        if (element) {
-            element.addEventListener(event, handler);
-        } else {
-            console.warn(`Element dengan id '${id}' tidak ditemukan`);
-        }
+        if (element) element.addEventListener(event, handler);
     }
 
     initializeWheel() {
@@ -154,11 +135,9 @@ class WheelOfFortune {
         const centerY = this.canvas.height / 2;
         const radius = this.canvas.width / 2 - 30;
         
-        // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         if (this.wheelItems.length === 0) {
-            // Tampilkan pesan jika tidak ada item
             this.ctx.fillStyle = '#f0f0f0';
             this.ctx.beginPath();
             this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
@@ -172,7 +151,6 @@ class WheelOfFortune {
             return;
         }
         
-        // Gambar setiap segmen
         const sliceAngle = (2 * Math.PI) / this.wheelItems.length;
         let startAngle = 0;
         
@@ -181,7 +159,6 @@ class WheelOfFortune {
         this.wheelItems.forEach((item, index) => {
             const endAngle = startAngle + sliceAngle;
             
-            // Gambar segmen
             this.ctx.beginPath();
             this.ctx.moveTo(centerX, centerY);
             this.ctx.arc(centerX, centerY, radius, startAngle, endAngle);
@@ -189,12 +166,10 @@ class WheelOfFortune {
             this.ctx.fillStyle = colors[index];
             this.ctx.fill();
             
-            // Border segmen
             this.ctx.strokeStyle = 'white';
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
             
-            // Tambah teks
             this.ctx.save();
             this.ctx.translate(centerX, centerY);
             this.ctx.rotate(startAngle + sliceAngle / 2);
@@ -202,7 +177,6 @@ class WheelOfFortune {
             this.ctx.fillStyle = 'white';
             this.ctx.font = 'bold 14px Arial';
             
-            // Potong teks jika terlalu panjang
             const maxTextLength = 12;
             const displayText = item.length > maxTextLength ? 
                 item.substring(0, maxTextLength) + '...' : item;
@@ -213,7 +187,6 @@ class WheelOfFortune {
             startAngle = endAngle;
         });
         
-        // Gambar lingkaran tengah
         this.ctx.beginPath();
         this.ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
         this.ctx.fillStyle = 'white';
@@ -224,22 +197,26 @@ class WheelOfFortune {
     }
 
     generateColors(count) {
+        const colorSchemes = [
+            ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'],
+            ['#FF9FF3', '#F368E0', '#FF9F43', '#FFCA3A', '#54A0FF', '#5F27CD', '#00D2D3', '#10AC84'],
+            ['#FC5C65', '#FD9644', '#FED330', '#26DE81', '#2BCBBA', '#45AAF2', '#4B7BEC', '#A55EEA']
+        ];
+        
+        const selectedScheme = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
         const colors = [];
-        const hueStep = 360 / count;
         
         for (let i = 0; i < count; i++) {
-            const hue = (i * hueStep) % 360;
-            colors.push(`hsl(${hue}, 70%, 60%)`);
+            colors.push(selectedScheme[i % selectedScheme.length]);
         }
         
         return colors;
     }
 
     spinWheel() {
-        if (this.spinning || this.wheelItems.length === 0) {
-            if (this.wheelItems.length === 0) {
-                alert('Tambahkan item terlebih dahulu!');
-            }
+        if (this.spinning) return;
+        if (this.wheelItems.length === 0) {
+            alert('Tambahkan item terlebih dahulu!');
             return;
         }
         
@@ -247,11 +224,8 @@ class WheelOfFortune {
         const spinBtn = document.getElementById('spin-btn');
         if (spinBtn) spinBtn.disabled = true;
 
-        // Tentukan pemenang
         const winnerIndex = this.determineWinner();
         const sliceAngle = (2 * Math.PI) / this.wheelItems.length;
-        
-        // Hitung sudut target
         const targetAngle = (winnerIndex * sliceAngle) + (Math.PI * 8) - (sliceAngle / 2);
         
         const duration = this.config.secretSettings.spinDuration * 1000;
@@ -263,12 +237,9 @@ class WheelOfFortune {
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
             
-            // Easing function untuk efek perlambatan
             const easeOut = 1 - Math.pow(1 - progress, 3);
-            
             this.currentRotation = startRotation + easeOut * (targetRotation - startRotation);
             
-            // Apply rotation
             this.canvas.style.transform = `rotate(${this.currentRotation}rad)`;
             
             if (progress < 1) {
@@ -280,7 +251,6 @@ class WheelOfFortune {
         
         animate();
         
-        // Play sound effect
         if (this.config.secretSettings.soundEnabled) {
             this.playSpinSound();
         }
@@ -288,7 +258,6 @@ class WheelOfFortune {
 
     determineWinner() {
         if (this.config.secretSettings.weightedMode && this.wheelItems.length > 1) {
-            // Mode probabilitas tertimbang
             const weights = this.wheelItems.map((_, index) => 
                 Math.max(0.1, 1 - (index * 0.8 / this.wheelItems.length))
             );
@@ -304,33 +273,23 @@ class WheelOfFortune {
             }
         }
         
-        // Mode normal dengan probabilitas menang
         const shouldWin = Math.random() * 100 <= this.config.secretSettings.winProbability;
-        
-        if (shouldWin) {
-            return Math.floor(Math.random() * this.wheelItems.length);
-        } else {
-            return Math.floor(Math.random() * this.wheelItems.length);
-        }
+        return Math.floor(Math.random() * this.wheelItems.length);
     }
 
     finishSpin(winnerIndex) {
         setTimeout(() => {
             const winner = this.wheelItems[winnerIndex];
-            
             this.showResult(winner);
             
-            // Aktifkan tombol spin lagi
             this.spinning = false;
             const spinBtn = document.getElementById('spin-btn');
             if (spinBtn) spinBtn.disabled = false;
             
-            // Hapus item jika diaktifkan
             if (this.config.secretSettings.removeAfterWin) {
                 this.removeItem(winnerIndex);
             }
             
-            // Tampilkan confetti
             if (this.config.secretSettings.confettiEnabled) {
                 this.launchConfetti();
             }
@@ -420,17 +379,15 @@ class WheelOfFortune {
             itemElement.className = 'item';
             itemElement.innerHTML = `
                 <span class="item-name">${item}</span>
-                <button class="delete-item" data-index="${index}" title="Hapus item">
+                <button class="delete-item" data-index="${index}">
                     <i class="fas fa-times"></i>
                 </button>
             `;
             container.appendChild(itemElement);
         });
         
-        // Add event listeners untuk tombol hapus
         container.querySelectorAll('.delete-item').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
+            btn.addEventListener('click', () => {
                 const index = parseInt(btn.getAttribute('data-index'));
                 this.removeItem(index);
             });
@@ -438,64 +395,33 @@ class WheelOfFortune {
     }
 
     openSecretSettings() {
-        // Isi form dengan konfigurasi saat ini
-        this.setElementValue('win-probability', this.config.secretSettings.winProbability);
-        this.setElementText('win-probability-value', this.config.secretSettings.winProbability + '%');
-        this.setElementChecked('auto-spin', this.config.secretSettings.autoSpin);
-        this.setElementValue('spin-duration', this.config.secretSettings.spinDuration);
-        this.setElementText('spin-duration-value', this.config.secretSettings.spinDuration + 's');
-        this.setElementChecked('sound-effect', this.config.secretSettings.soundEnabled);
-        this.setElementValue('winner-color', this.config.secretSettings.winnerColor);
-        this.setElementChecked('confetti-effect', this.config.secretSettings.confettiEnabled);
-        this.setElementChecked('weighted-mode', this.config.secretSettings.weightedMode);
-        this.setElementChecked('remove-after-win', this.config.secretSettings.removeAfterWin);
+        document.getElementById('win-probability').value = this.config.secretSettings.winProbability;
+        document.getElementById('win-probability-value').textContent = this.config.secretSettings.winProbability + '%';
+        document.getElementById('auto-spin').checked = this.config.secretSettings.autoSpin;
+        document.getElementById('spin-duration').value = this.config.secretSettings.spinDuration;
+        document.getElementById('spin-duration-value').textContent = this.config.secretSettings.spinDuration + 's';
+        document.getElementById('sound-effect').checked = this.config.secretSettings.soundEnabled;
+        document.getElementById('winner-color').value = this.config.secretSettings.winnerColor;
+        document.getElementById('confetti-effect').checked = this.config.secretSettings.confettiEnabled;
+        document.getElementById('weighted-mode').checked = this.config.secretSettings.weightedMode;
+        document.getElementById('remove-after-win').checked = this.config.secretSettings.removeAfterWin;
         
-        const secretModal = document.getElementById('secret-modal');
-        if (secretModal) secretModal.style.display = 'flex';
-    }
-
-    setElementValue(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.value = value;
-    }
-
-    setElementText(id, text) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = text;
-    }
-
-    setElementChecked(id, checked) {
-        const element = document.getElementById(id);
-        if (element) element.checked = checked;
+        document.getElementById('secret-modal').style.display = 'flex';
     }
 
     saveSecretSettings() {
-        this.config.secretSettings.winProbability = this.getElementValue('win-probability', 50);
-        this.config.secretSettings.autoSpin = this.getElementChecked('auto-spin', false);
-        this.config.secretSettings.spinDuration = this.getElementValue('spin-duration', 5);
-        this.config.secretSettings.soundEnabled = this.getElementChecked('sound-effect', true);
-        this.config.secretSettings.winnerColor = this.getElementValue('winner-color', '#FFD700');
-        this.config.secretSettings.confettiEnabled = this.getElementChecked('confetti-effect', true);
-        this.config.secretSettings.weightedMode = this.getElementChecked('weighted-mode', false);
-        this.config.secretSettings.removeAfterWin = this.getElementChecked('remove-after-win', false);
+        this.config.secretSettings.winProbability = parseInt(document.getElementById('win-probability').value);
+        this.config.secretSettings.autoSpin = document.getElementById('auto-spin').checked;
+        this.config.secretSettings.spinDuration = parseInt(document.getElementById('spin-duration').value);
+        this.config.secretSettings.soundEnabled = document.getElementById('sound-effect').checked;
+        this.config.secretSettings.winnerColor = document.getElementById('winner-color').value;
+        this.config.secretSettings.confettiEnabled = document.getElementById('confetti-effect').checked;
+        this.config.secretSettings.weightedMode = document.getElementById('weighted-mode').checked;
+        this.config.secretSettings.removeAfterWin = document.getElementById('remove-after-win').checked;
         
-        // Simpan ke localStorage
         localStorage.setItem('wheelSecretConfig', JSON.stringify(this.config.secretSettings));
-        
-        const secretModal = document.getElementById('secret-modal');
-        if (secretModal) secretModal.style.display = 'none';
-        
+        document.getElementById('secret-modal').style.display = 'none';
         alert('✅ Pengaturan rahasia telah disimpan!');
-    }
-
-    getElementValue(id, defaultValue) {
-        const element = document.getElementById(id);
-        return element ? parseInt(element.value) || defaultValue : defaultValue;
-    }
-
-    getElementChecked(id, defaultValue) {
-        const element = document.getElementById(id);
-        return element ? element.checked : defaultValue;
     }
 
     resetSecretSettings() {
@@ -512,9 +438,7 @@ class WheelOfFortune {
             };
             
             localStorage.removeItem('wheelSecretConfig');
-            const secretModal = document.getElementById('secret-modal');
-            if (secretModal) secretModal.style.display = 'none';
-            
+            document.getElementById('secret-modal').style.display = 'none';
             alert('✅ Pengaturan telah direset ke default!');
         }
     }
@@ -522,9 +446,9 @@ class WheelOfFortune {
     updateRangeValue(e) {
         const value = e.target.value;
         if (e.target.id === 'win-probability') {
-            this.setElementText('win-probability-value', value + '%');
+            document.getElementById('win-probability-value').textContent = value + '%';
         } else if (e.target.id === 'spin-duration') {
-            this.setElementText('spin-duration-value', value + 's');
+            document.getElementById('spin-duration-value').textContent = value + 's';
         }
     }
 
@@ -533,10 +457,9 @@ class WheelOfFortune {
             const savedConfig = localStorage.getItem('wheelSecretConfig');
             if (savedConfig) {
                 this.config.secretSettings = JSON.parse(savedConfig);
-                console.log('✅ Konfigurasi loaded dari localStorage');
             }
         } catch (error) {
-            console.error('❌ Error loading config:', error);
+            console.error('Error loading config:', error);
         }
     }
 
@@ -545,25 +468,22 @@ class WheelOfFortune {
             const savedItems = localStorage.getItem('wheelItems');
             if (savedItems) {
                 this.wheelItems = JSON.parse(savedItems);
-                console.log('✅ Items loaded dari localStorage:', this.wheelItems.length);
             }
         } catch (error) {
-            console.error('❌ Error loading items:', error);
+            console.error('Error loading items:', error);
         }
     }
 
     saveItems() {
         try {
             localStorage.setItem('wheelItems', JSON.stringify(this.wheelItems));
-            console.log('💾 Items disimpan:', this.wheelItems.length);
         } catch (error) {
-            console.error('❌ Error saving items:', error);
+            console.error('Error saving items:', error);
         }
     }
 
     playSpinSound() {
         try {
-            // Sound effect sederhana menggunakan Web Audio API
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -571,7 +491,6 @@ class WheelOfFortune {
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            // Sound effect spinning
             oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
             oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 5);
             
@@ -581,7 +500,7 @@ class WheelOfFortune {
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 5);
         } catch (error) {
-            console.warn('🔇 Sound effect tidak tersedia:', error);
+            console.log('Sound effect skipped');
         }
     }
 
@@ -592,17 +511,15 @@ class WheelOfFortune {
         this.confettiParticles = [];
         const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
         
-        // Buat partikel confetti
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < 150; i++) {
             this.confettiParticles.push({
                 x: Math.random() * this.confettiCanvas.width,
                 y: Math.random() * -100,
-                size: Math.random() * 12 + 6,
+                size: Math.random() * 10 + 5,
                 color: colors[Math.floor(Math.random() * colors.length)],
-                speed: Math.random() * 5 + 2,
+                speed: Math.random() * 3 + 2,
                 rotation: Math.random() * Math.PI * 2,
-                spin: (Math.random() - 0.5) * 0.2,
-                sway: Math.random() * 2 - 1
+                spin: (Math.random() - 0.5) * 0.2
             });
         }
         
@@ -612,7 +529,6 @@ class WheelOfFortune {
     animateConfetti() {
         if (!this.confettiCtx || !this.confettiCanvas) return;
         
-        // Clear canvas dengan transparansi untuk efek fade
         this.confettiCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
         this.confettiCtx.fillRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
         
@@ -622,12 +538,10 @@ class WheelOfFortune {
             if (particle.y < this.confettiCanvas.height) {
                 particlesAlive = true;
                 
-                // Update posisi
                 particle.y += particle.speed;
-                particle.x += Math.sin(particle.rotation) * 2 + particle.sway;
+                particle.x += Math.sin(particle.rotation) * 2;
                 particle.rotation += particle.spin;
                 
-                // Gambar partikel
                 this.confettiCtx.save();
                 this.confettiCtx.translate(particle.x, particle.y);
                 this.confettiCtx.rotate(particle.rotation);
@@ -642,7 +556,6 @@ class WheelOfFortune {
         if (particlesAlive) {
             requestAnimationFrame(() => this.animateConfetti());
         } else {
-            // Clear canvas ketika selesai
             setTimeout(() => {
                 if (this.confettiCtx) {
                     this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
@@ -653,8 +566,5 @@ class WheelOfFortune {
     }
 }
 
-// Inisialisasi aplikasi
+// Start the application
 const wheelApp = new WheelOfFortune();
-
-// Export untuk akses global (jika diperlukan)
-window.wheelApp = wheelApp;
