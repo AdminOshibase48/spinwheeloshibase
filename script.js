@@ -23,6 +23,7 @@ class WheelOfFortune {
         this.confettiCtx = null;
         this.confettiParticles = [];
         this.animationId = null;
+        this.confettiAnimationId = null; // Tambahkan ini
 
         this.init();
     }
@@ -505,66 +506,65 @@ class WheelOfFortune {
     }
 
     launchConfetti() {
-        if (!this.confettiCanvas || !this.confettiCtx) return;
-        
-        this.confettiCanvas.style.display = 'block';
-        this.confettiParticles = [];
-        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-        
-        for (let i = 0; i < 150; i++) {
-            this.confettiParticles.push({
-                x: Math.random() * this.confettiCanvas.width,
-                y: Math.random() * -100,
-                size: Math.random() * 10 + 5,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                speed: Math.random() * 3 + 2,
-                rotation: Math.random() * Math.PI * 2,
-                spin: (Math.random() - 0.5) * 0.2
-            });
-        }
-        
-        this.animateConfetti();
+    if (!this.confettiCanvas || !this.confettiCtx) return;
+    
+    // Reset confetti canvas
+    this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+    this.confettiCanvas.style.display = 'block';
+    
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFEAA7', '#DDA0DD', '#F7DC6F'];
+    const confettiCount = 100;
+    const confettiParticles = [];
+    
+    // Buat partikel confetti
+    for (let i = 0; i < confettiCount; i++) {
+        confettiParticles.push({
+            x: Math.random() * this.confettiCanvas.width,
+            y: -20,
+            size: Math.random() * 12 + 6,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            speed: Math.random() * 3 + 2,
+            rotation: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 0.1
+        });
     }
-
-    animateConfetti() {
-        if (!this.confettiCtx || !this.confettiCanvas) return;
-        
-        this.confettiCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        this.confettiCtx.fillRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+    
+    const animateConfetti = () => {
+        this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
         
         let particlesAlive = false;
         
-        this.confettiParticles.forEach(particle => {
+        confettiParticles.forEach(particle => {
             if (particle.y < this.confettiCanvas.height) {
                 particlesAlive = true;
                 
+                // Update posisi
                 particle.y += particle.speed;
-                particle.x += Math.sin(particle.rotation) * 2;
+                particle.x += Math.sin(particle.rotation) * 1;
                 particle.rotation += particle.spin;
                 
+                // Gambar confetti
                 this.confettiCtx.save();
                 this.confettiCtx.translate(particle.x, particle.y);
                 this.confettiCtx.rotate(particle.rotation);
-                
                 this.confettiCtx.fillStyle = particle.color;
                 this.confettiCtx.fillRect(-particle.size/2, -particle.size/2, particle.size, particle.size);
-                
                 this.confettiCtx.restore();
             }
         });
         
         if (particlesAlive) {
-            requestAnimationFrame(() => this.animateConfetti());
+            requestAnimationFrame(animateConfetti);
         } else {
+            // Sembunyikan canvas ketika selesai
             setTimeout(() => {
-                if (this.confettiCtx) {
-                    this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
-                    this.confettiCanvas.style.display = 'none';
-                }
+                this.confettiCanvas.style.display = 'none';
             }, 1000);
         }
-    }
+    };
+    
+    animateConfetti();
 }
-
+        
 // Start the application
 const wheelApp = new WheelOfFortune();
