@@ -1,7 +1,13 @@
 class WheelOfFortune {
     constructor() {
         this.config = {
-            items: ['Hadiah 1', 'Hadiah 2', 'Hadiah 3', 'Hadiah 4', 'Hadiah 5', 'Hadiah 6'],
+            items: [
+                { name: 'Hadiah 1', probability: 20 },
+                { name: 'Hadiah 2', probability: 20 },
+                { name: 'Hadiah 3', probability: 20 },
+                { name: 'Hadiah 4', probability: 20 },
+                { name: 'Hadiah 5', probability: 20 }
+            ],
             secretSettings: {
                 winProbability: 50,
                 autoSpin: false,
@@ -87,6 +93,9 @@ class WheelOfFortune {
         this.addListener('reset-settings', 'click', () => this.resetSecretSettings());
         this.addListener('close-result', 'click', () => this.closeResultModal());
         this.addListener('spin-again', 'click', () => this.spinAgain());
+        this.addListener('probability-btn', 'click', () => this.openProbabilityModal());
+        this.addListener('auto-distribute-btn', 'click', () => this.autoDistributeProbabilities());
+        this.addListener('save-probability', 'click', () => this.saveProbabilities());
         
         // Input events
         this.addListener('item-input', 'keypress', (e) => {
@@ -152,12 +161,15 @@ class WheelOfFortune {
             return;
         }
         
-        const sliceAngle = (2 * Math.PI) / this.wheelItems.length;
+        // Hitung total probabilitas untuk menentukan sudut
+        const totalProbability = this.wheelItems.reduce((sum, item) => sum + (item.probability || 0), 0);
         let startAngle = 0;
         
         const colors = this.generateColors(this.wheelItems.length);
         
         this.wheelItems.forEach((item, index) => {
+            const probability = item.probability || Math.floor(100 / this.wheelItems.length);
+            const sliceAngle = (2 * Math.PI * probability) / totalProbability;
             const endAngle = startAngle + sliceAngle;
             
             this.ctx.beginPath();
@@ -171,18 +183,26 @@ class WheelOfFortune {
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
             
+            // Tambah teks dengan probabilitas
             this.ctx.save();
             this.ctx.translate(centerX, centerY);
             this.ctx.rotate(startAngle + sliceAngle / 2);
             this.ctx.textAlign = 'right';
             this.ctx.fillStyle = 'white';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.font = 'bold 12px Arial';
             
-            const maxTextLength = 12;
-            const displayText = item.length > maxTextLength ? 
-                item.substring(0, maxTextLength) + '...' : item;
+            const itemName = item.name || item;
+            const maxTextLength = 10;
+            const displayText = itemName.length > maxTextLength ? 
+                itemName.substring(0, maxTextLength) + '...' : itemName;
                 
-            this.ctx.fillText(displayText, radius - 35, 5);
+            this.ctx.fillText(displayText, radius - 40, 5);
+            
+            // Tambah persentase jika ada probabilitas
+            if (item.probability) {
+                this.ctx.font = 'bold 10px Arial';
+                this.ctx.fillText(item.probability + '%', radius - 40, 18);
+            }
             this.ctx.restore();
             
             startAngle = endAngle;
@@ -226,13 +246,27 @@ class WheelOfFortune {
         if (spinBtn) spinBtn.disabled = true;
 
         const winnerIndex = this.determineWinner();
-        const sliceAngle = (2 * Math.PI) / this.wheelItems.length;
-        const targetAngle = (winnerIndex * sliceAngle) + (Math.PI * 8) - (sliceAngle / 2);
+        const totalProbability = this.wheelItems.reduce((sum, item) => sum + (item.probability || 0), 0);
+        
+        // Hitung sudut berdasarkan probabilitas
+        let currentAngle = 0;
+        let targetAngle = 0;
+        
+        for (let i = 0; i <= winnerIndex; i++) {
+            const probability = this.wheelItems[i].probability || Math.floor(100 / this.wheelItems.length);
+            const sliceAngle = (2 * Math.PI * probability) / totalProbability;
+            if (i === winnerIndex) {
+                targetAngle = currentAngle + (sliceAngle / 2);
+            }
+            currentAngle += sliceAngle;
+        }
+        
+        const finalTargetAngle = targetAngle + (Math.PI * 8) - (Math.PI / 2);
         
         const duration = this.config.secretSettings.spinDuration * 1000;
         const startTime = Date.now();
         const startRotation = this.currentRotation;
-        const targetRotation = startRotation + (8 * 2 * Math.PI) + targetAngle;
+        const targetRotation = startRotation + (8 * 2 * Math.PI) + finalTargetAngle;
         
         const animate = () => {
             const elapsed = Date.now() - startTime;
@@ -258,30 +292,26 @@ class WheelOfFortune {
     }
 
     determineWinner() {
-        if (this.config.secretSettings.weightedMode && this.wheelItems.length > 1) {
-            const weights = this.wheelItems.map((_, index) => 
-                Math.max(0.1, 1 - (index * 0.8 / this.wheelItems.length))
-            );
-            const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
-            const random = Math.random() * totalWeight;
-            
-            let cumulativeWeight = 0;
-            for (let i = 0; i < weights.length; i++) {
-                cumulativeWeight += weights[i];
-                if (random <= cumulativeWeight) {
-                    return i;
-                }
+        // Gunakan probabilitas custom jika ada
+        const totalProbability = this.wheelItems.reduce((sum, item) => sum + (item.probability || 0), 0);
+        const random = Math.random() * totalProbability;
+        
+        let cumulativeProbability = 0;
+        for (let i = 0; i < this.wheelItems.length; i++) {
+            const probability = this.wheelItems[i].probability || Math.floor(100 / this.wheelItems.length);
+            cumulativeProbability += probability;
+            if (random <= cumulativeProbability) {
+                return i;
             }
         }
         
-        const shouldWin = Math.random() * 100 <= this.config.secretSettings.winProbability;
-        return Math.floor(Math.random() * this.wheelItems.length);
+        return this.wheelItems.length - 1; // fallback
     }
 
     finishSpin(winnerIndex) {
         setTimeout(() => {
             const winner = this.wheelItems[winnerIndex];
-            this.showResult(winner);
+            this.showResult(winner, winnerIndex);
             
             this.spinning = false;
             const spinBtn = document.getElementById('spin-btn');
@@ -297,13 +327,19 @@ class WheelOfFortune {
         }, 1000);
     }
 
-    showResult(winner) {
+    showResult(winner, winnerIndex) {
         const winnerName = document.getElementById('winner-name');
+        const winnerProbability = document.getElementById('winner-probability');
         const resultModal = document.getElementById('result-modal');
         
-        if (winnerName && resultModal) {
-            winnerName.textContent = winner;
+        if (winnerName && winnerProbability && resultModal) {
+            const name = winner.name || winner;
+            const probability = winner.probability || Math.floor(100 / this.wheelItems.length);
+            
+            winnerName.textContent = name;
             winnerName.style.color = this.config.secretSettings.winnerColor;
+            winnerProbability.textContent = probability;
+            
             resultModal.style.display = 'flex';
         }
     }
@@ -347,8 +383,17 @@ class WheelOfFortune {
         const itemName = input.value.trim();
         
         if (itemName) {
-            this.wheelItems.push(itemName);
+            // Hitung probabilitas default (rata-rata)
+            const defaultProbability = this.wheelItems.length > 0 ? 
+                Math.floor(100 / (this.wheelItems.length + 1)) : 100;
+            
+            this.wheelItems.push({
+                name: itemName,
+                probability: defaultProbability
+            });
+            
             input.value = '';
+            this.redistributeProbabilities();
             this.drawWheel();
             this.renderItemsList();
             this.saveItems();
@@ -359,6 +404,9 @@ class WheelOfFortune {
 
     removeItem(index) {
         this.wheelItems.splice(index, 1);
+        if (this.wheelItems.length > 0) {
+            this.redistributeProbabilities();
+        }
         this.drawWheel();
         this.renderItemsList();
         this.saveItems();
@@ -385,10 +433,14 @@ class WheelOfFortune {
         }
         
         this.wheelItems.forEach((item, index) => {
+            const itemName = item.name || item;
+            const probability = item.probability || Math.floor(100 / this.wheelItems.length);
+            
             const itemElement = document.createElement('div');
             itemElement.className = 'item';
             itemElement.innerHTML = `
-                <span class="item-name">${item}</span>
+                <span class="item-name">${itemName}</span>
+                <div class="item-probability">${probability}%</div>
                 <button class="delete-item" data-index="${index}">
                     <i class="fas fa-times"></i>
                 </button>
@@ -404,6 +456,131 @@ class WheelOfFortune {
         });
     }
 
+    // PROBABILITY FEATURES
+    openProbabilityModal() {
+        if (this.wheelItems.length === 0) {
+            alert('Tambahkan item terlebih dahulu!');
+            return;
+        }
+        
+        this.renderProbabilityControls();
+        document.getElementById('probability-modal').style.display = 'flex';
+    }
+
+    renderProbabilityControls() {
+        const container = document.getElementById('probability-items');
+        const totalProbabilityElement = document.getElementById('total-probability');
+        const warningElement = document.getElementById('probability-warning');
+        
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        const colors = this.generateColors(this.wheelItems.length);
+        const totalProbability = this.wheelItems.reduce((sum, item) => sum + (item.probability || 0), 0);
+        
+        // Update total probability
+        if (totalProbabilityElement) {
+            totalProbabilityElement.textContent = totalProbability;
+        }
+        
+        // Tampilkan warning jika total bukan 100%
+        if (warningElement) {
+            warningElement.style.display = totalProbability !== 100 ? 'block' : 'none';
+        }
+        
+        this.wheelItems.forEach((item, index) => {
+            const itemName = item.name || item;
+            const probability = item.probability || Math.floor(100 / this.wheelItems.length);
+            
+            const itemElement = document.createElement('div');
+            itemElement.className = 'probability-item';
+            itemElement.innerHTML = `
+                <div class="probability-item-color" style="background-color: ${colors[index]}"></div>
+                <div class="probability-item-name">${itemName}</div>
+                <div class="probability-controls">
+                    <input type="range" class="probability-slider" 
+                           min="1" max="100" value="${probability}" 
+                           data-index="${index}">
+                    <input type="number" class="probability-value" 
+                           min="1" max="100" value="${probability}"
+                           data-index="${index}">
+                </div>
+            `;
+            container.appendChild(itemElement);
+        });
+        
+        // Event listeners untuk slider dan input
+        container.querySelectorAll('.probability-slider').forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                const value = parseInt(e.target.value);
+                this.updateItemProbability(index, value);
+            });
+        });
+        
+        container.querySelectorAll('.probability-value').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                const value = parseInt(e.target.value) || 1;
+                this.updateItemProbability(index, value);
+            });
+        });
+    }
+
+    updateItemProbability(index, probability) {
+        if (index >= 0 && index < this.wheelItems.length) {
+            // Pastikan item dalam format object
+            if (typeof this.wheelItems[index] === 'string') {
+                this.wheelItems[index] = {
+                    name: this.wheelItems[index],
+                    probability: probability
+                };
+            } else {
+                this.wheelItems[index].probability = Math.max(1, Math.min(100, probability));
+            }
+            this.renderProbabilityControls();
+        }
+    }
+
+    redistributeProbabilities() {
+        if (this.wheelItems.length === 0) return;
+        
+        const equalProbability = Math.floor(100 / this.wheelItems.length);
+        const remainder = 100 - (equalProbability * this.wheelItems.length);
+        
+        this.wheelItems.forEach((item, index) => {
+            if (typeof item === 'string') {
+                this.wheelItems[index] = {
+                    name: item,
+                    probability: equalProbability + (index < remainder ? 1 : 0)
+                };
+            } else {
+                item.probability = equalProbability + (index < remainder ? 1 : 0);
+            }
+        });
+    }
+
+    autoDistributeProbabilities() {
+        this.redistributeProbabilities();
+        this.renderProbabilityControls();
+    }
+
+    saveProbabilities() {
+        const totalProbability = this.wheelItems.reduce((sum, item) => sum + (item.probability || 0), 0);
+        
+        if (totalProbability !== 100) {
+            alert('Total probabilitas harus 100%! Saat ini: ' + totalProbability + '%');
+            return;
+        }
+        
+        this.drawWheel();
+        this.saveItems();
+        document.getElementById('probability-modal').style.display = 'none';
+        alert('✅ Probabilitas berhasil disimpan!');
+    }
+
+    // SECRET SETTINGS
     openSecretSettings() {
         document.getElementById('win-probability').value = this.config.secretSettings.winProbability;
         document.getElementById('win-probability-value').textContent = this.config.secretSettings.winProbability + '%';
@@ -477,7 +654,18 @@ class WheelOfFortune {
         try {
             const savedItems = localStorage.getItem('wheelItems');
             if (savedItems) {
-                this.wheelItems = JSON.parse(savedItems);
+                const items = JSON.parse(savedItems);
+                // Handle data lama (array string) dan baru (array object)
+                if (items.length > 0 && typeof items[0] === 'string') {
+                    // Convert data lama ke format baru
+                    this.wheelItems = items.map(name => ({
+                        name: name,
+                        probability: Math.floor(100 / items.length)
+                    }));
+                    this.saveItems(); // Simpan format baru
+                } else {
+                    this.wheelItems = items;
+                }
             }
         } catch (error) {
             console.error('Error loading items:', error);
@@ -581,5 +769,5 @@ class WheelOfFortune {
     }
 }
 
-// Start the application - FIXED: Pastikan ini di luar class
+// Start the application
 const wheelApp = new WheelOfFortune();
