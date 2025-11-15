@@ -961,3 +961,212 @@ footer i {
         max-width: 250px;
     }
 }
+
+/* Tambahkan di bagian akhir style.css */
+
+/* Tab Styles untuk Pengaturan Rahasia */
+.settings-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom: 3px solid transparent;
+    transition: var(--transition);
+    flex: 1;
+    text-align: center;
+}
+
+.tab-button:hover {
+    color: var(--primary-color);
+    background: #f8f9fa;
+}
+
+.tab-button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background: #f8f9fa;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Probability Tab Styles */
+#probability-tab {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.probability-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 2px solid #e9ecef;
+}
+
+.probability-info p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin: 0;
+}
+
+#total-probability {
+    color: var(--primary-color);
+    font-size: 1.3rem;
+}
+
+.probability-warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+    border: 1px solid #ffeaa7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.probability-items {
+    margin-bottom: 20px;
+}
+
+.probability-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: var(--transition);
+}
+
+.probability-item:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.probability-item-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.probability-item-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--dark-color);
+    font-size: 0.9rem;
+    min-width: 120px;
+}
+
+.probability-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 2;
+}
+
+.probability-slider {
+    flex: 1;
+    height: 5px;
+    border-radius: 3px;
+    background: #e9ecef;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.probability-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.probability-value {
+    width: 50px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--primary-color);
+    background: #f8f9fa;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    font-size: 0.9rem;
+}
+
+.probability-actions {
+    text-align: center;
+    padding: 15px 0;
+}
+
+/* Hilangkan tombol probability dari wheel controls */
+.probability-btn {
+    display: none;
+}
+
+/* Sembunyikan probabilitas dari item list */
+.item-probability {
+    display: none;
+}
+
+/* Responsive untuk tabs */
+@media (max-width: 768px) {
+    .settings-tabs {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .tab-button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .probability-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .probability-controls {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .probability-item-name {
+        min-width: auto;
+        text-align: center;
+    }
+}
